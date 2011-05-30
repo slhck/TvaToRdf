@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require 'runner.rb'
+
+runner = Runner.new(ARGV)
+runner.run
