@@ -8,6 +8,5 @@ Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.required_ruby_version = '>=1.9' 
   s.files	= Dir['**/**'] 
-  s.executables = [ 'TvaToRdf' ] 
-  s.has_rdoc	= false
+  s.executables = [ 'TvaToRdf' ]
 end
