@@ -77,16 +77,29 @@ class XmlToRdf
     
     attr_crid = program_information.attributes["programId"]
     attr_title = program_information.elements['BasicDescription/Title'].text rescue "No Title"
-    attr_synopsis = program_information.elements['BasicDescription/Synopsis'].text rescue "No Synopsis"
+    attr_synopsis = program_information.elements['BasicDescription/Synopsis'].text rescue "No Synopsis"  
+    
+    genre_node = program_information.elements['BasicDescription/Genre']
+    unless genre_node.nil?
+      attr_genre_urn = program_information.elements['BasicDescription/Genre'].attributes['href']
+      attr_genre_name = program_information.elements['BasicDescription/Genre/Name'].text rescue "No Name"
+    end
     
     program = RDF::URI.new(attr_crid)
     
     # A program is essentially an Episode (no further details here)
     statements.push Statement.new :subject => program, :predicate => RDF.type, :object => @po.Episode
     
-    # TODO do something with title and synopsis
-    statements.push Statement.new :subject => program, :predicate => DC.title, :object => RDF::Literal.new(attr_title)
-    statements.push Statement.new :subject => program, :predicate => @po.synopsis, :object => RDF::Literal.new(attr_synopsis)
+    # Add title and synopsis
+    statements.push Statement.new :subject => program, :predicate => DC.title, :object => Literal.new(attr_title)
+    statements.push Statement.new :subject => program, :predicate => @po.synopsis, :object => Literal.new(attr_synopsis)
+    statements.push Statement.new :subject => program, :predicate => @po.short_synopsis, :object => Literal.new(attr_synopsis)
+    statements.push Statement.new :subject => program, :predicate => @po.medium_synopsis, :object => Literal.new(attr_synopsis)
+    
+    # Add genre (but only if it was specified at all)
+    unless genre_node.nil?
+      statements.push Statement.new :subject => program, :predicate => @po.genre, :object => RDF::URI.new(attr_genre_urn)
+    end
     
     statements
   end
@@ -104,7 +117,8 @@ class XmlToRdf
     # A program is bound to one service
     statements.push Statement.new :subject => program, :predicate => @po.service, :object => serv
 
-    # TODO Create Version and Broadcast
+    # Create Version and Broadcast, here as a blank node
+    # TODO maybe have another representation?
     version = Node.uuid()
     broadcast = Node.uuid()
 
