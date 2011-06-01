@@ -26,6 +26,13 @@ Usage: ass3_task1 [options]
         
         opts.on("-o", "--output <output-file>", "Output to this file") do |file|
           $output = file
+        end
+        
+        opts.separator "Non-mandatory options:"
+        
+        opts.on("-f", "--filmlist <filmlist-file>", "Use this RDF file of films to match against") do |file|
+          $link = true
+          $filmlist = file
         end        
         
         opts.separator "Common options:"

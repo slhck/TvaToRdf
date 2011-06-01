@@ -23,11 +23,20 @@ class Runner
     info "Opening XML file..."
     xml = Document.new(File.open($input)) rescue "Could not open file!"
     
-    xmlParser = XmlToRdf.new(xml)
-    xmlParser.parseFromFile
+    # Create a new parser
+    if $link
+      info "Reading Film list.."
+      filmlist = Document.new(File.open($filmlist)) rescue "Could not open file!"
+      xmlParser = XmlToRdf.new(xml, filmlist)
+    else
+      xmlParser = XmlToRdf.new(xml)
+    end
+    
+    # Parse
+    xmlParser.parse_from_file
     
     info "Writing output"
-    xmlParser.serializeToFile($output)
+    xmlParser.serialize_to_file($output)
     info "Finished processing"
   end
   

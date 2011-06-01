@@ -10,15 +10,30 @@ include RDF
 
 class XmlToRdf
   
-  def initialize(xml)
+  attr_accessor :program_nodes_count, :schedule_nodes_count
+  
+  def initialize(xml, filmlist = nil)
+    # Initialize vocabularies
     @po = Vocabulary.new("http://purl.org/ontology/po/")  # => The programme ontology
     @tl = Vocabulary.new("http://purl.org/NET/c4dm/timeline.owl#")  # => External vocabularies
     @self = "http://example.com/rdf/"     # => The prefix for self created URIs
+    
+    # The TVA XML document 
     @xml = xml
+    
+    # The RDF list of films
+    @filmlist = filmlist unless filmlist.nil?
+    
+    # Set up iterators
+    @program_nodes_count = 0
+    @program_nodes_iterator = 0
+    @schedule_nodes_iterator = 0
+    @schedule_nodes_count = 0
   end
   
+  
   # -------------------------------------------------------------------
-  def parseFromFile
+  def parse_from_file
 
     info "Creating statements for Services..."
     
@@ -26,21 +41,23 @@ class XmlToRdf
     
     # Iterate over services
     @xml.root.each_element("//ServiceInformation") do |service_info|
-      @statements += parseServiceInformation(service_info)
+      @statements += parse_service_information(service_info)
     end
-    
-    info "Creating statements for Programmes..."
     
     # Iterate over programs
+    info "Creating statements for Programmes..."
+    @program_nodes_count = XPath.first(@xml.root, 'count(//ProgramInformation)')
+    debug "There are " + @program_nodes_count.to_s + " program entries to consider"
     @xml.root.each_element("//ProgramInformation") do |program_information|
-      @statements += parseProgramInformation(program_information)
+      @statements += parse_program_information(program_information)
     end
     
-    info "Creating statements for Schedule..."
-    
     # Iterate over schedule
+    info "Creating statements for Schedule..."
+    @schedule_nodes_count = XPath.first(@xml.root, 'count(//Schedule)')
+    debug "There are " + @schedule_nodes_count.to_s + " schedule entries to consider"
     @xml.root.each_element("//Schedule") do |schedule|
-      @statements += parseScheduleInformation(schedule)
+      @statements += parse_schedule_information(schedule)
     end
     
     info "Total statements: #{@statements.size}"
@@ -48,7 +65,7 @@ class XmlToRdf
   end
   
   # -------------------------------------------------------------------
-  def parseServiceInformation(service_info)
+  def parse_service_information(service_info)
     statements = Array.new
     
     attr_id = service_info.attributes['serviceId']
@@ -72,8 +89,11 @@ class XmlToRdf
   end
 
   # -------------------------------------------------------------------  
-  def parseProgramInformation(program_information)
+  def parse_program_information(program_information)
     statements = Array.new
+    
+    @program_nodes_iterator += 1
+    debug "Processing Program #{@program_nodes_iterator} or #{@program_nodes_count}"  
     
     attr_crid = program_information.attributes["programId"]
     attr_title = program_information.elements['BasicDescription/Title'].text rescue "No Title"
@@ -101,15 +121,34 @@ class XmlToRdf
       statements.push Statement.new :subject => program, :predicate => @po.genre, :object => RDF::URI.new(attr_genre_urn)
     end
     
+    if @filmlist
+      # Find corresponding film, this is really stupid and inefficient, but the checking should be simple
+      @filmlist.root.each_element("movie:film") do |film|
+        if attr_title.downcase.strip == film.elements['rdfs:label'].text.downcase.strip
+          
+          # debug "Match found between " + attr_title + " and " + film.elements['rdfs:label'].text
+          # debug "URI for match: " + film.attributes['rdf:about']
+          
+          statements.push Statement.new :subject => program, :predicate => RDFS.seeAlso, :object => RDF::URI.new(film.attributes['rdf:about'])
+        end
+      end
+    end
+      
+    
     statements
   end
   
   # ----------------------------------------------------------------------
-  def parseScheduleInformation(schedule) 
+  def parse_schedule_information(schedule) 
     statements = Array.new
+    
+    @schedule_nodes_iterator += 1
+    debug "Processing Schedule #{@schedule_nodes_iterator} or #{@schedule_nodes_count}"  
     
     attr_crid = schedule.elements['ScheduleEvent'].elements['Program'].attributes['crid']
     attr_service = schedule.attributes['serviceIDRef']
+    attr_start = schedule.elements['ScheduleEvent'].elements['PublishedStartTime'].text
+    attr_end = schedule.elements['ScheduleEvent'].elements['PublishedEndTime'].text
 
     program = RDF::URI.new(attr_crid)
     serv = RDF::URI.new(@self + attr_service)
@@ -117,7 +156,7 @@ class XmlToRdf
     # A program is bound to one service
     statements.push Statement.new :subject => program, :predicate => @po.service, :object => serv
 
-    # Create Version and Broadcast, here as a blank node
+    # Create Version and Broadcast, here as a blank node because we don't have any additional information
     # TODO maybe have another representation?
     version = Node.uuid()
     broadcast = Node.uuid()
@@ -126,21 +165,22 @@ class XmlToRdf
     statements.push Statement.new :subject => version, :predicate => @po.broadcast, :object => broadcast
     statements.push Statement.new :subject => broadcast, :predicate => @po.broadcast_on, :object => serv
 
-    # Create the timeline
+    # Create the timeline as a blank node, only with start and end
     interval = Node.uuid()
     statements.push Statement.new :subject => interval, :predicate => RDF.type, :object => @tl.interval
-    # TODO extend the timeline
+    statements.push Statement.new :subject => interval, :predicate => @tl.start, :object => Literal.new(attr_start, :datatype => XSD.dateTime)
+    statements.push Statement.new :subject => interval, :predicate => @tl.end, :object => Literal.new(attr_end, :datatype => XSD.dateTime)
 
-    # Hook the version to the timeline
-    statements.push Statement.new :subject => version, :predicate => @po.time, :object => interval
+    # Hook the timeline to the broadcast
+    statements.push Statement.new :subject => broadcast, :predicate => @po.time, :object => interval
     
     statements
   end
   
-  def serializeToFile(file)
+  def serialize_to_file(file)
     RDF::Writer.open(file) do |writer|
-      writer << RDF::Graph.new do |graph|
-        @statements.each do |statement|
+      writer << Graph.new do |graph|
+        @statements.each_with_index do |statement|
           graph << statement
         end
       end
