@@ -93,7 +93,7 @@ class XmlToRdf
     statements = Array.new
     
     @program_nodes_iterator += 1
-    debug "Processing Program #{@program_nodes_iterator} or #{@program_nodes_count}"  
+    debug "Processing Program #{@program_nodes_iterator} of #{@program_nodes_count}"  
     
     attr_crid = program_information.attributes["programId"]
     attr_title = program_information.elements['BasicDescription/Title'].text rescue "No Title"
@@ -126,8 +126,8 @@ class XmlToRdf
       @filmlist.root.each_element("movie:film") do |film|
         if attr_title.downcase.strip == film.elements['rdfs:label'].text.downcase.strip
           
-          # debug "Match found between " + attr_title + " and " + film.elements['rdfs:label'].text
-          # debug "URI for match: " + film.attributes['rdf:about']
+          info "Match found between " + attr_title.strip + " and " + film.elements['rdfs:label'].text.strip
+          info "URI for match: " + film.attributes['rdf:about']
           
           statements.push Statement.new :subject => program, :predicate => RDFS.seeAlso, :object => RDF::URI.new(film.attributes['rdf:about'])
         end
@@ -143,7 +143,7 @@ class XmlToRdf
     statements = Array.new
     
     @schedule_nodes_iterator += 1
-    debug "Processing Schedule #{@schedule_nodes_iterator} or #{@schedule_nodes_count}"  
+    debug "Processing Schedule #{@schedule_nodes_iterator} of #{@schedule_nodes_count}"  
     
     attr_crid = schedule.elements['ScheduleEvent'].elements['Program'].attributes['crid']
     attr_service = schedule.attributes['serviceIDRef']
