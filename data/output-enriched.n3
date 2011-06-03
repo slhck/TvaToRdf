@@ -58,7 +58,8 @@
 """;
    <http://purl.org/ontology/po/synopsis> """(Komödie, USA 2001) 106.28
 """;
-   a <http://purl.org/ontology/po/Episode> .
+   a <http://purl.org/ontology/po/Episode>;
+   <http://www.w3.org/2000/01/rdf-schema#seeAlso> <http://data.linkedmdb.org/resource/film/657> .
 <crid://tva.cs.univie.ac.at/d1e1276> <http://purl.org/dc/terms/title> "Alice im Wunderland                                                                                 ";
    <http://purl.org/ontology/po/genre> <urn:tva:metadata:cs:ContentCS:2007:3.5>;
    <http://purl.org/ontology/po/medium_synopsis> """Zeichentrickserie
