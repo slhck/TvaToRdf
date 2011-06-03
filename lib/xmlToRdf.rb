@@ -188,6 +188,17 @@ class XmlToRdf
     end
   end
   
+  def serialize_statements_to_file(statements, file)
+    RDF::Writer.open(file) do |writer|
+      writer << Graph.new do |graph|
+        statements.each_with_index do |statement|
+          graph << statement
+        end
+      end
+    end
+  end
+
+  
   # ----------------------------------------------
   # Helper methods
   

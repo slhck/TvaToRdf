@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 
 require 'runner.rb'
-
+module TvaToRdf
+  
 runner = Runner.new(ARGV)
 runner.run
+
+end
