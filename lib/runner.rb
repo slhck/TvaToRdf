@@ -8,6 +8,8 @@ require 'uuid'
 include REXML
 include RDF
 
+module TvaToRdf
+
 class Runner
   
   def initialize(args)
@@ -60,4 +62,6 @@ class Runner
     $stderr.puts "ERROR\t#{msg} #{e}"
   end
   
+end
+
 end

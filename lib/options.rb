@@ -1,5 +1,7 @@
 require 'optparse'
 require 'ostruct'
+
+module TvaToRdf
   
 # Some options that can be passed when the script is run from the commandline
 class Options
@@ -61,3 +63,5 @@ Usage: ass3_task1 [options]
       end # opts
     end # self.parse
 end # Class options
+
+end # Module

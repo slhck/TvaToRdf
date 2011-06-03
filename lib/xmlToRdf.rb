@@ -7,6 +7,7 @@ require 'uuid'
 include REXML
 include RDF
 
+module TvaToRdf
 
 class XmlToRdf
   
@@ -202,4 +203,6 @@ class XmlToRdf
     $stderr.puts "ERROR\t#{msg} #{e}"
   end
   
+end
+
 end
