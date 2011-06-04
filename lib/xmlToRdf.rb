@@ -97,8 +97,8 @@ class XmlToRdf
     debug "Processing Program #{@program_nodes_iterator} of #{@program_nodes_count}"  
     
     attr_crid = program_information.attributes["programId"]
-    attr_title = program_information.elements['BasicDescription/Title'].text rescue "No Title"
-    attr_synopsis = program_information.elements['BasicDescription/Synopsis'].text rescue "No Synopsis"  
+    attr_title = program_information.elements['BasicDescription/Title'].text.strip rescue "No Title"
+    attr_synopsis = program_information.elements['BasicDescription/Synopsis'].text.strip rescue "No Synopsis"  
     
     genre_node = program_information.elements['BasicDescription/Genre']
     unless genre_node.nil?
